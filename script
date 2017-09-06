@@ -1,0 +1,103 @@
+#!/bin/bash
+
+function valid_ip()
+{
+    local  ip=$1
+    local  stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
+            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+
+function create_server(){
+	echo "Creating server with ip" $1 "and port" $2 "with PID" $3;
+	#screen -dmS "$3" bash -c 'echo waiting 5 senconds...; sleep 5; exec bash';
+}
+
+function start_server(){
+	echo "Starting server with PID" $1;
+	if ! screen -list | grep -q "$1"
+	then
+		echo "ok";
+    	#screen -S "$1" -X stuff "command here";
+    else
+    	echo "No server with this PID found";
+	fi
+}
+
+function stop_server(){
+	echo "Stopping server with PID" $1;
+	if ! screen -list | grep -q "$1"
+	then
+		echo "ok";
+    	#screen -S "$1" -X stuff "command here";
+    else
+    	echo "No server with this PID found";
+	fi
+}
+
+function restart_server(){
+	echo "Restarting server with PID" $1;
+	#screen -S "$1" -X stuff "command here";
+}
+
+case $1 in
+	create)
+		if valid_ip "$2"
+		then
+			if [[ "${3}" =~ ^[-+.]?[0-9]+$ ]]
+			then
+				if [[ "${4}" =~ ^[-+.]?[0-9]+$ ]]
+				then
+					create_server "$2" "$3" "$4"
+				else
+					echo "Enter the UID";
+				fi
+			else
+				echo "PORT not valid";
+			fi
+		else
+			echo "IP address not valid";
+		fi
+		;;
+	stop)
+		if [[ "$2" =~ ^[-+]?[0-9]+$ ]]
+		then
+			stop_server "$2"
+		else
+			echo "Please enter a valid PID";
+		fi
+		;;
+	start)
+		if [[ "$2" =~ ^[-+]?[0-9]+$ ]]
+		then
+			start_server "$2"
+		else
+			echo "Please enter a valid PID";
+		fi
+		;;
+	restart)
+		if [[ "$2" =~ ^[-+]?[0-9]+$ ]]
+		then
+			restart_server "$2"
+		else
+			echo "Please enter a valid PID";
+		fi
+		;;
+	help)
+		echo -e "\n--- HELP ---\n - start {PID}\n - stop {PID}\n - restart {PID}\n - create {IP} {PORT} {PID}\n";
+		exit 1;
+		;;
+	*)
+		echo "Usage: {start|stop|restart|create|help}";
+		exit 1;
+		;;
+esac
